@@ -44,13 +44,13 @@ h1.cover .ln{display:block;overflow:hidden}.h1.cover .ln>span{display:block}
 .thanks b{font-family:'Fraunces',serif;color:var(--ink);font-size:19px;display:block;margin-bottom:3px;font-weight:600}
 .hero-visual{display:flex;justify-content:center;align-items:center;perspective:1200px}
 /* cap to viewport minus nav+padding so the FULL phone frame always fits (never clipped by .hero overflow) */
-.hero-visual img{width:auto;height:min(calc(100svh - 250px),clamp(440px,48vw,700px));filter:drop-shadow(0 40px 70px rgba(35,26,17,.26));will-change:transform}
+.hero-visual img{width:auto;height:min(calc(100svh - 250px),clamp(440px,48vw,700px));will-change:transform}
 .scrollcue{position:absolute;left:0;right:0;bottom:20px;text-align:center;z-index:2;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
 /* STORY (sticky phone + scrolling steps) */
 .story{padding:clamp(40px,7vh,90px) 0}
 .story .wrap{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,6vw,90px);align-items:start}
 .story-stage{position:sticky;top:0;height:100svh;display:flex;align-items:center;justify-content:center}
-.story-stage img{height:clamp(420px,60vh,640px);width:auto;filter:drop-shadow(0 50px 80px rgba(35,26,17,.30))}
+.story-stage img{height:clamp(420px,60vh,640px);width:auto}
 .story-steps{padding:8vh 0}
 .story-step{min-height:78vh;display:flex;flex-direction:column;justify-content:center}
 .story-step .idx{font-family:'Fraunces',serif;font-variation-settings:'opsz' 144;font-size:clamp(54px,7vw,104px);line-height:1;color:var(--orange);letter-spacing:-.04em}

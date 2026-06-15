@@ -45,7 +45,7 @@ var inp=form.querySelector('input[type=email]');var email=(inp.value||'').trim()
 if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){if(errEl){errEl.textContent="That doesn't look like an email. Mind checking it?";errEl.classList.add('show');}return;}
 var rid=uuidv4();
 var row={id:rid,email:email,concept:concept,angle:qp('utm_content'),utm_source:qp('utm_source'),utm_medium:qp('utm_medium'),utm_campaign:qp('utm_campaign'),utm_content:qp('utm_content'),utm_term:qp('utm_term'),fbp:getCookie('_fbp'),fbc:getCookie('_fbc'),referrer:document.referrer||'',page:location.pathname};
-var btn=form.querySelector('button');var t=btn.textContent;btn.disabled=true;btn.textContent='â€¦';
+var btn=form.querySelector('button');var t=btn.textContent;btn.disabled=true;btn.textContent='…';
 fetch(SB+'/rest/v1/signups',{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(row)})
 .then(function(r){if(!r.ok)throw 0;document.querySelectorAll('.signup').forEach(function(f){f.style.display='none';});document.querySelectorAll('.micro').forEach(function(m){m.style.display='none';});document.querySelectorAll('.thanks').forEach(function(tk){tk.classList.add('show');});if(!done){track('signup_completed');fbqt('Lead',{content_name:concept,content_category:qp('utm_content')||'organic'},rid);done=true;}openSurvey(rid);})
 .catch(function(){btn.disabled=false;btn.textContent=t;if(errEl){errEl.textContent="Something went wrong. Try again in a moment.";errEl.classList.add('show');}});});});

@@ -4,6 +4,14 @@ var DESK=window.matchMedia('(min-width:821px)').matches;
 var TOUCH=window.matchMedia('(hover:none)').matches;
 function qp(k){return new URLSearchParams(location.search).get(k)||"";}
 var concept=document.body.getAttribute('data-concept');var done=false;var SB=window.SUPABASE_URL,KEY=window.SUPABASE_ANON_KEY;
+// --- analytics: GA4 event + auto concept/angle on every event. No-ops if no IDs set.
+function track(name,params){var base={concept:concept,angle:qp('utm_content')||''};if(params)for(var k in params)base[k]=params[k];try{if(typeof gtag==='function')gtag('event',name,base);}catch(e){}}
+function fbqt(name,params){try{if(typeof fbq==='function')fbq('track',name,params||{});}catch(e){}}
+function initAnalytics(){
+  track('view_content');fbqt('ViewContent',{content_name:concept,content_category:qp('utm_content')||'organic'});
+  document.querySelectorAll('.pill,.ratebtn,.sticky a').forEach(function(el){el.addEventListener('click',function(){track('cta_click',{location:(el.className||'').split(' ')[0]||'cta'});});});
+  var fs=false;document.querySelectorAll('.signup input[type=email]').forEach(function(i){i.addEventListener('focus',function(){if(!fs){fs=true;track('form_start');}});});
+}
 function uuidv4(){try{if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();}catch(e){}
   var b=null;try{b=crypto.getRandomValues(new Uint8Array(16));}catch(e){}
   if(!b){b=[];for(var i=0;i<16;i++)b[i]=Math.floor(Math.random()*256);}
@@ -15,7 +23,7 @@ function patchSurvey(rid,obj){var b={p_id:rid};
   if(obj.survey_completed_at)b.p_done=true;
   return fetch(SB+'/rest/v1/rpc/submit_survey',{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(b)}).catch(function(){});}
 function openSurvey(rid){var s=document.querySelector('[data-survey]');if(!s)return;
-  s.hidden=false;document.body.style.overflow='hidden';
+  s.hidden=false;document.body.style.overflow='hidden';track('survey_opened');
   var steps=[].slice.call(s.querySelectorAll('.q'));var prog=s.querySelector('.survey-prog i');var answers={};var idx=0;
   function show(i){steps.forEach(function(q,n){q.style.display=(n===i?'block':'none');});if(prog)prog.style.width=(((i+1)/steps.length)*100)+'%';}
   function close(){s.hidden=true;document.body.style.overflow='';}
@@ -24,9 +32,10 @@ function openSurvey(rid){var s=document.querySelector('[data-survey]');if(!s)ret
   show(0);
   s.querySelectorAll('.opt').forEach(function(btn){btn.addEventListener('click',function(){
     var key=btn.getAttribute('data-q');
-    if(btn.classList.contains('opt-done')){var ta=s.querySelector('.survey-text');var v=(ta&&ta.value.trim())||'';if(v)answers[key]=v;answers.survey_completed_at=new Date().toISOString();patchSurvey(rid,answers);finish();return;}
+    if(btn.classList.contains('opt-done')){var ta=s.querySelector('.survey-text');var v=(ta&&ta.value.trim())||'';if(v)answers[key]=v;answers.survey_completed_at=new Date().toISOString();patchSurvey(rid,answers);track('survey_completed',{wish:v?'yes':'no'});finish();return;}
     answers[key]=btn.getAttribute('data-v');
     var sibs=btn.parentNode.querySelectorAll('.opt');for(var k=0;k<sibs.length;k++)sibs[k].classList.remove('sel');btn.classList.add('sel');
+    track('survey_step',{step:idx+1,field:key,value:btn.getAttribute('data-v')});
     patchSurvey(rid,answers);idx++;if(idx<steps.length){setTimeout(function(){show(idx);},170);}else{finish();}});});
   s.querySelectorAll('[data-skip]').forEach(function(x){x.addEventListener('click',close);});}
 document.querySelectorAll('.signup').forEach(function(form){form.addEventListener('submit',function(e){e.preventDefault();
@@ -37,7 +46,7 @@ var rid=uuidv4();
 var row={id:rid,email:email,concept:concept,angle:qp('utm_content'),utm_source:qp('utm_source'),utm_medium:qp('utm_medium'),utm_campaign:qp('utm_campaign'),utm_content:qp('utm_content'),utm_term:qp('utm_term'),referrer:document.referrer||'',page:location.pathname};
 var btn=form.querySelector('button');var t=btn.textContent;btn.disabled=true;btn.textContent='…';
 fetch(SB+'/rest/v1/signups',{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(row)})
-.then(function(r){if(!r.ok)throw 0;document.querySelectorAll('.signup').forEach(function(f){f.style.display='none';});document.querySelectorAll('.micro').forEach(function(m){m.style.display='none';});document.querySelectorAll('.thanks').forEach(function(tk){tk.classList.add('show');});if(!done&&typeof fbq==='function'){fbq('track','Lead',{content_name:concept});done=true;}openSurvey(rid);})
+.then(function(r){if(!r.ok)throw 0;document.querySelectorAll('.signup').forEach(function(f){f.style.display='none';});document.querySelectorAll('.micro').forEach(function(m){m.style.display='none';});document.querySelectorAll('.thanks').forEach(function(tk){tk.classList.add('show');});if(!done){track('signup_completed');fbqt('Lead',{content_name:concept,content_category:qp('utm_content')||'organic'});done=true;}openSurvey(rid);})
 .catch(function(){btn.disabled=false;btn.textContent=t;if(errEl){errEl.textContent="Something went wrong. Try again in a moment.";errEl.classList.add('show');}});});});
 var nav=document.querySelector('.nav');var sticky=document.querySelector('.sticky');var hero=document.querySelector('.hero');
 function onScroll(){var y=window.scrollY||document.documentElement.scrollTop;if(nav)nav.classList.toggle('scrolled',y>40);
@@ -82,5 +91,6 @@ function initGSAP(){
     b.addEventListener('mousemove',function(e){var r=b.getBoundingClientRect();gsap.to(b,{x:(e.clientX-r.left-r.width/2)*.3,y:(e.clientY-r.top-r.height/2)*.4,duration:.4});});
     b.addEventListener('mouseleave',function(){gsap.to(b,{x:0,y:0,duration:.5,ease:'elastic.out(1,.4)'});});});
 }
+initAnalytics();
 if(document.readyState!=='loading')initGSAP();else window.addEventListener('DOMContentLoaded',initGSAP);
 })();

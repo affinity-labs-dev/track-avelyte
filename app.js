@@ -6,7 +6,8 @@ function qp(k){return new URLSearchParams(location.search).get(k)||"";}
 var concept=document.body.getAttribute('data-concept');var done=false;var SB=window.SUPABASE_URL,KEY=window.SUPABASE_ANON_KEY;
 // --- analytics: GA4 event + auto concept/angle on every event. No-ops if no IDs set.
 function track(name,params){var base={concept:concept,angle:qp('utm_content')||''};if(params)for(var k in params)base[k]=params[k];try{if(typeof gtag==='function')gtag('event',name,base);}catch(e){}}
-function fbqt(name,params){try{if(typeof fbq==='function')fbq('track',name,params||{});}catch(e){}}
+function fbqt(name,params,id){try{if(typeof fbq==='function')fbq('track',name,params||{},id?{eventID:id}:undefined);}catch(e){}}
+function getCookie(n){var m=document.cookie.match('(?:^|; )'+n.replace(/([.$?*|{}()\[\]\\\/+^])/g,'\\$1')+'=([^;]*)');return m?decodeURIComponent(m[1]):'';}
 function initAnalytics(){
   track('view_content');fbqt('ViewContent',{content_name:concept,content_category:qp('utm_content')||'organic'});
   document.querySelectorAll('.pill,.ratebtn,.sticky a').forEach(function(el){el.addEventListener('click',function(){track('cta_click',{location:(el.className||'').split(' ')[0]||'cta'});});});
@@ -43,10 +44,10 @@ var box=form.closest('[data-form]')||form.parentNode;var errEl=box.querySelector
 var inp=form.querySelector('input[type=email]');var email=(inp.value||'').trim();
 if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){if(errEl){errEl.textContent="That doesn't look like an email. Mind checking it?";errEl.classList.add('show');}return;}
 var rid=uuidv4();
-var row={id:rid,email:email,concept:concept,angle:qp('utm_content'),utm_source:qp('utm_source'),utm_medium:qp('utm_medium'),utm_campaign:qp('utm_campaign'),utm_content:qp('utm_content'),utm_term:qp('utm_term'),referrer:document.referrer||'',page:location.pathname};
-var btn=form.querySelector('button');var t=btn.textContent;btn.disabled=true;btn.textContent='…';
+var row={id:rid,email:email,concept:concept,angle:qp('utm_content'),utm_source:qp('utm_source'),utm_medium:qp('utm_medium'),utm_campaign:qp('utm_campaign'),utm_content:qp('utm_content'),utm_term:qp('utm_term'),fbp:getCookie('_fbp'),fbc:getCookie('_fbc'),referrer:document.referrer||'',page:location.pathname};
+var btn=form.querySelector('button');var t=btn.textContent;btn.disabled=true;btn.textContent='â€¦';
 fetch(SB+'/rest/v1/signups',{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(row)})
-.then(function(r){if(!r.ok)throw 0;document.querySelectorAll('.signup').forEach(function(f){f.style.display='none';});document.querySelectorAll('.micro').forEach(function(m){m.style.display='none';});document.querySelectorAll('.thanks').forEach(function(tk){tk.classList.add('show');});if(!done){track('signup_completed');fbqt('Lead',{content_name:concept,content_category:qp('utm_content')||'organic'});done=true;}openSurvey(rid);})
+.then(function(r){if(!r.ok)throw 0;document.querySelectorAll('.signup').forEach(function(f){f.style.display='none';});document.querySelectorAll('.micro').forEach(function(m){m.style.display='none';});document.querySelectorAll('.thanks').forEach(function(tk){tk.classList.add('show');});if(!done){track('signup_completed');fbqt('Lead',{content_name:concept,content_category:qp('utm_content')||'organic'},rid);done=true;}openSurvey(rid);})
 .catch(function(){btn.disabled=false;btn.textContent=t;if(errEl){errEl.textContent="Something went wrong. Try again in a moment.";errEl.classList.add('show');}});});});
 var nav=document.querySelector('.nav');var sticky=document.querySelector('.sticky');var hero=document.querySelector('.hero');
 function onScroll(){var y=window.scrollY||document.documentElement.scrollTop;if(nav)nav.classList.toggle('scrolled',y>40);
